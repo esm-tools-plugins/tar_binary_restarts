@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 import pdb
-import glob
+from esm_parser import user_note
 
 def tar_binary_restarts(config, test_config=None):
     """
@@ -21,36 +21,39 @@ def tar_binary_restarts(config, test_config=None):
     """
 
     st = time.time()
-    tar_binary_restarts = config["fesom"]["tar_binary_restarts"]
+    tar_binary_restarts = config["fesom"].get("tar_binary_restarts", False)
 
     if tar_binary_restarts:
         workdir = config["general"]["thisrun_work_dir"]
-        nproc = config["fesom"]["nproc"]
         cpn = config["computer"]["partitions"]["compute"]["cores_per_node"]
-        if os.path.isdir(workdir):
-            os.chdir(workdir)
-        else:
-            Print(f"Warning: {workdir} does not exists. Will skip this plugin.")
-            return
+        if not os.path.isdir(workdir):
+            user_note(f"WARNING: Missing workdir:", f"``{workdir}`` does not exists. Will skip this plugin.")
+            return config
 
         bin_restart_dirs = ["fesom_bin_restart", "fesom_raw_restart"]
+        check = False
         for restart_dir in bin_restart_dirs:
-            if os.path.isdir(f"{workdir}{restart_dir}"):
+            if os.path.isdir(f"{workdir}/{restart_dir}"):
                 # Check if restart folder is not empty
-                if os.listdir(restart_dir):
+                if os.listdir(f"{workdir}/{restart_dir}"):
+                    check = True
                     tar_name = f"{restart_dir}.tar.gz"
-                    output = subprocess.run([f'tar cf - {restart_dir} | pigz -p {cpn} > {tar_name}'], shell=True)
-#                  if output:
-#                        print(f"Successfully tarred {restart_dir}")
+                    output = subprocess.run([f'tar cf - {workdir}/{restart_dir} | pigz -p {cpn} > {workdir}/{tar_name}'], shell=True)
+                    if output.returncode == 0:
+                        user_note(f"SUCCESS:", f"Successfully tarred {restart_dir}.")
+                    else:
+                        user_note(f"WARNING:", f"There has been an error occuring during taring of binary restart files.")
                 else:
-                    print(f"Warning: {restart_dir} is empty.")
-            #else:
-            #    print(f"Warning: No {restart_dir} to tar.")
+                    user_note(f"WARNING: No binary restart files:", f"{restart_dir} is empty.")
+        if not check:
+            user_note(f"WARNING: No binary restart folder:", "No folder of binary restart files found.")
 
         et = time.time()
         elapsed_time = et - st
 
-        print(f"Plugin tar_binary_restarts fininshed. Execution time: {elapsed_time} seconds.")
+        user_note(f"Plugin tar_binary_restarts fininshed.", f"Execution time: {elapsed_time} seconds.")
+
+        return config
 
 
 if __name__ == "__main__":
