@@ -53,7 +53,7 @@ def tar_binary_restarts(config, test_config=None):
 
         user_note(f"Plugin tar_binary_restarts fininshed.", f"Execution time: {elapsed_time} seconds.")
 
-        return config
+    return config
 
 
 if __name__ == "__main__":
