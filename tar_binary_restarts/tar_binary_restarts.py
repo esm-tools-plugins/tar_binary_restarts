@@ -39,7 +39,7 @@ def tar_binary_restarts(config, test_config=None):
                 # Check if restart folder is not empty
                 if os.listdir(restart_dir):
                     tar_name = f"{restart_dir}.tar.gz"
-                    output = subprocess.run([f'tar cf - restart_dir | pigz -p {cpn} > {tar_name}'], shell=True)
+                    output = subprocess.run([f'tar cf - {restart_dir} | pigz -p {cpn} > {tar_name}'], shell=True)
 #                  if output:
 #                        print(f"Successfully tarred {restart_dir}")
                 else:
