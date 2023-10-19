@@ -1,11 +1,10 @@
-===================
 tar_binary_restarts
 ===================
 
 A plugin to tar binary restart files.
 
-Testin
-------
+Testing
+-------
 
 You can test this plugin by executing::
 
