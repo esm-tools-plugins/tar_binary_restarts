@@ -3,6 +3,8 @@ import yaml
 import os
 import subprocess
 import time
+import pdb
+import glob
 
 def tar_binary_restarts(config, test_config=None):
     """
@@ -19,20 +21,36 @@ def tar_binary_restarts(config, test_config=None):
     """
 
     st = time.time()
+    tar_binary_restarts = config["fesom"]["tar_binary_restarts"]
 
-    workdir = config["general"]["work_dir"]
-    nproc = config["fesom"]["nproc"]
-    nproc_on_node = config["computer"]["partition_cpn"]
-    os.chdir(workdir)
-    bin_restart_dir = "fesom_raw_restart"
-    #bin_restart_dir = "fesom_bin_restart"
-    os.chdir(bin_restart_dir)
-    tar_name = f"np{nproc}.tar.gz"
-    output = subprocess.run([f'tar cf - *{nproc}* | pigz -p {nproc_on_node} > {tar_name}'], shell=True)
+    if tar_binary_restarts:
+        workdir = config["general"]["thisrun_work_dir"]
+        nproc = config["fesom"]["nproc"]
+        cpn = config["computer"]["partitions"]["compute"]["cores_per_node"]
+        if os.path.isdir(workdir):
+            os.chdir(workdir)
+        else:
+            Print(f"Warning: {workdir} does not exists. Will skip this plugin.")
+            return
 
-    et = time.time()
-    elapsed_time = et - st
-    print('Execution time:', elapsed_time, 'seconds')
+        bin_restart_dirs = ["fesom_bin_restart", "fesom_raw_restart"]
+        for restart_dir in bin_restart_dirs:
+            if os.path.isdir(f"{workdir}{restart_dir}"):
+                # Check if restart folder is not empty
+                if os.listdir(restart_dir):
+                    tar_name = f"{restart_dir}.tar.gz"
+                    output = subprocess.run([f'tar cf - restart_dir | pigz -p {cpn} > {tar_name}'], shell=True)
+#                  if output:
+#                        print(f"Successfully tarred {restart_dir}")
+                else:
+                    print(f"Warning: {restart_dir} is empty.")
+            #else:
+            #    print(f"Warning: No {restart_dir} to tar.")
+
+        et = time.time()
+        elapsed_time = et - st
+
+        print(f"Plugin tar_binary_restarts fininshed. Execution time: {elapsed_time} seconds.")
 
 
 if __name__ == "__main__":
