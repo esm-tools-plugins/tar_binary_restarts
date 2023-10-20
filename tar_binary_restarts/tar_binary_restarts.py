@@ -5,7 +5,7 @@ from esm_parser import user_note
 
 def tar_binary_restarts(config, test_config=None):
     """
-    Tar and compress binary restart files.
+    Tar and compression of FESOM-2 binary restart files
 
     Parameters
     ----------
